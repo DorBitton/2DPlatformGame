@@ -36,11 +36,15 @@ public class PlayerController : MonoBehaviour
 
         if (_characterController.below)
         {
+            _moveDirection.y = 0f;
+            isJumping = false;
+
             if (_startJump)
             {
                 _startJump = false;
                 _moveDirection.y = jumpSpeed;
                 isJumping = true;
+                _characterController.DisableGrounCheck();
             }
         }
         else // In the air

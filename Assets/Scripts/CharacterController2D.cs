@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using GlobalTypes;
 
 public class CharacterController2D : MonoBehaviour
 {
@@ -9,6 +10,8 @@ public class CharacterController2D : MonoBehaviour
 
     // Flags
     public bool below;
+    private bool _disableGroundCheck;
+    public GroundType groundType;
 
     private Vector2 _moveAmount;
     private Vector2 _currentPosition;
@@ -37,7 +40,8 @@ public class CharacterController2D : MonoBehaviour
         _rigidBody.MovePosition(_currentPosition);
         _moveAmount = Vector2.zero;
 
-        CheckGrounded();
+        if(!_disableGroundCheck)
+            CheckGrounded();
     }
 
     public void Move(Vector2 movment)
@@ -66,9 +70,30 @@ public class CharacterController2D : MonoBehaviour
             }
         }
         if (numberOfGroundHits > 0)
+        {
+            if (_raycastHits[1].collider)
+            {
+                groundType = DetermineGroundType(_raycastHits[1].collider);
+            }
+            else
+            {
+                for (int i = 0; i < _raycastHits.Length; i++)
+                {
+                    if (_raycastHits[i].collider)
+                    {
+                        groundType = DetermineGroundType(_raycastHits[i].collider);
+                    }
+                }
+            }
             below = true;
+
+        }
         else
+        {
+            groundType = GroundType.None;
             below = false;
+        }
+            
 
     }
 
@@ -77,6 +102,32 @@ public class CharacterController2D : MonoBehaviour
         for (int i = 0; i < _rayCastPosition.Length; i++)
         {
             Debug.DrawRay(_rayCastPosition[i], direction * raycastDistance, color);
+        }
+    }
+
+    public void DisableGrounCheck()
+    {
+        below = false;
+        _disableGroundCheck = true;
+        StartCoroutine("EnableGroundCheck");
+    }
+
+    IEnumerator EnableGroundCheck()
+    {
+        yield return new WaitForSeconds(0.1f);
+        _disableGroundCheck = false;
+    }
+
+    private GroundType DetermineGroundType(Collider2D collider)
+    {
+        if (collider.GetComponent<GroundEffector>())
+        {
+            GroundEffector groundEffector = collider.GetComponent<GroundEffector>();
+            return groundEffector.groundType;
+        }
+        else
+        {
+            return GroundType.LevelGeometry;
         }
     }
 }
